@@ -57,14 +57,18 @@ export function resizeResults(
   };
 }
 
-export async function loadDetector() {
-  const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
-
-  const detector = await faceDetection.createDetector(model, {
-    maxFaces: 1,
-    runtime: "mediapipe",
-    solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection",
+export function loadDetector(): Promise<faceDetection.FaceDetector> {
+  return new Promise((resolve, reject) => {
+    const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
+    faceDetection
+      .createDetector(model, {
+        maxFaces: 1,
+        runtime: "mediapipe",
+        solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection",
+      })
+      .then((detector) => {
+        resolve(detector);
+      })
+      .catch(reject);
   });
-
-  return detector;
 }
