@@ -16,7 +16,6 @@ const {
   showSquareCheckbox,
   clearCanvas,
 } = initApp();
-
 // Load the detector and the webcam
 const detector = await loadDetector();
 const video = await loadWebCam(VideoRoot, {

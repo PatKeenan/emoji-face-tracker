@@ -4,4 +4,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [],
   base: "/emoji-face-tracker/",
+  build: {
+    target: "esnext",
+  },
 });
