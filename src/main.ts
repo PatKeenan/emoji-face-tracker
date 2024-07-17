@@ -1,19 +1,52 @@
-import "./style.css";
 import * as THREE from "three";
+import { loadDetector, loadWebCam } from "./face-detector";
+import { initApp } from "./elements";
+import "./style.css";
 
+// State
+let showSquare = false;
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
+
+// Elements & configuration
+const {
+  app,
+  video: VideoRoot,
+  drawSquare,
+  showSquareCheckbox,
+  clearCanvas,
+} = initApp();
+
+// Load the detector and the webcam
+const detector = await loadDetector();
+const video = await loadWebCam(VideoRoot, {
+  width: windowWidth,
+  height: windowHeight,
+});
+
+// Event Listeners
+showSquareCheckbox.addEventListener("change", () => {
+  showSquare = !showSquare;
+
+  if (!showSquare) {
+    clearCanvas();
+  }
+});
+
+// Create a canvas to draw the face detection results
 const scene = new THREE.Scene();
-
 const camera = new THREE.PerspectiveCamera(
   75,
-  window.innerWidth / window.innerHeight,
+  windowWidth / windowHeight,
   0.1,
   1000
 );
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(windowWidth, windowHeight);
+
 renderer.setAnimationLoop(animate);
-document.body.appendChild(renderer.domElement);
+app.prepend(renderer.domElement);
 
 // Emoji
 const geometry = new THREE.SphereGeometry(1, 32, 32);
@@ -61,18 +94,52 @@ eyes.add(pupils);
 circle.add(eyes);
 camera.position.z = 5;
 
-// Follow the mouse with the eyes until model is wired up
-document.addEventListener("mousemove", (event) => {
-  const x = event.clientX;
-  const y = event.clientY;
+//////////////////////////////////////////
+// Face Detection loop //////////////////
+(async function runDetector() {
+  let lastVideoTime = -1;
+  async function loop() {
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      if (video.currentTime !== lastVideoTime) {
+        lastVideoTime = performance.now();
+        const faces = await detector.estimateFaces(video, {
+          flipHorizontal: true,
+        });
 
-  const targetX = (x - window.innerWidth / 2) / 1000;
-  const targetY = (y - window.innerHeight / 2) / 1000;
+        if (faces[0]) {
+          // Draw the square if the checkbox is checked
+          if (showSquare) {
+            drawSquare(faces[0].box);
+          }
 
-  circle.rotation.y = targetX;
-  circle.rotation.x = targetY;
-});
+          const { xMin, yMin, width, height } = faces[0].box;
 
-function animate() {
+          const x = xMin + width / 2;
+          const y = yMin + height / 2;
+
+          const xScaled = x / video.videoWidth;
+          const yScaled = y / video.videoHeight;
+
+          const xScreen = xScaled * windowWidth;
+          const yScreen = yScaled * windowHeight;
+
+          const targetX = (xScreen - windowWidth / 2) / 2500;
+          const targetY = (yScreen - windowHeight / 2) / 2500;
+
+          circle.rotation.y = targetX;
+          circle.rotation.x = targetY;
+        }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  setTimeout(() => {
+    loop();
+  }, 1000 / 30);
+})();
+
+//////////////////////////////////////////
+// Threejs loop /////////////////////////
+async function animate() {
   renderer.render(scene, camera);
 }

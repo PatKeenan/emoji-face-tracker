@@ -14,6 +14,11 @@
     "vite": "^5.3.1"
   },
   "dependencies": {
+    "@mediapipe/face_detection": "^0.4.1646425229",
+    "@mediapipe/tasks-vision": "^0.10.14",
+    "@tensorflow-models/face-detection": "^1.0.2",
+    "@tensorflow/tfjs-backend-webgl": "^4.20.0",
+    "@tensorflow/tfjs-core": "^4.20.0",
     "three": "^0.166.1"
   }
 }
